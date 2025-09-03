@@ -53,8 +53,8 @@ Follow these instructions to get the project up and running on your local machin
 ### 1\. Clone the Repository
 
 ```sh
-git clone <your-repository-url>
-cd <repository-directory>
+git clone https://github.com/GratiaManullang03/atlas.git
+cd atlas
 ```
 
 ### 2\. Configure Environment Variables
