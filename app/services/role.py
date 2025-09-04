@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.repositories.role import RoleRepository
 from app.repositories.application import ApplicationRepository
-from app.schemas.role import Role, RoleCreate, RoleUpdate
+from app.schemas.role import Role, RoleCreate, RoleUpdate, RoleWithDetails, ApplicationInfo
+from app.schemas.user import User
 
 class RoleService:
     def __init__(self):
@@ -11,9 +12,28 @@ class RoleService:
         self.app_repository = ApplicationRepository()
     
     def get_role(self, db: Session, role_id: int) -> Optional[Role]:
-        """Get single role"""
+        """Get single role without relationships"""
         db_role = self.repository.get(db, role_id)
         return Role.model_validate(db_role) if db_role else None
+    
+    def get_role_with_details(self, db: Session, role_id: int) -> Optional[RoleWithDetails]:
+        """Get role with application info and assigned users"""
+        db_role = self.repository.get_with_application_and_users(db, role_id)
+        if not db_role:
+            return None
+        
+        # Extract application info
+        application_info = ApplicationInfo.model_validate(db_role.application)
+        
+        # Extract users from user_roles relationship
+        users = [User.model_validate(ur.user) for ur in db_role.user_roles]
+        
+        # Create role with details
+        role_data = Role.model_validate(db_role).model_dump()
+        role_data['application'] = application_info
+        role_data['users'] = users
+        
+        return RoleWithDetails.model_validate(role_data)
     
     def get_roles(
         self, 

@@ -5,7 +5,7 @@ from typing import Optional
 from app.db.session import get_db
 from app.api.deps import PermissionChecker
 from app.services.role import RoleService
-from app.schemas.role import Role, RoleCreate, RoleUpdate
+from app.schemas.role import Role, RoleCreate, RoleUpdate, RoleWithDetails
 from app.schemas.permission import PermissionsUpdate
 from app.schemas.common import DataResponse, PaginationResponse
 
@@ -34,13 +34,13 @@ def get_roles(
         pages=(total + limit - 1) // limit
     )
 
-@router.get("/{role_id}", response_model=DataResponse[Role])
+@router.get("/{role_id}", response_model=DataResponse[RoleWithDetails])
 def get_role(
     role_id: int,
     db: Session = Depends(get_db)
 ):
-    """Get single role by ID"""
-    role = role_service.get_role(db, role_id)
+    """Get single role by ID with application info and assigned users"""
+    role = role_service.get_role_with_details(db, role_id)
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
     

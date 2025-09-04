@@ -1,6 +1,7 @@
 from sqlalchemy import (
     Column, BigInteger, Integer, String, DateTime, ForeignKey, UniqueConstraint
 )
+from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 from app.db.base import Base
@@ -16,6 +17,9 @@ class Role(Base):
     r_permissions = Column(JSONB)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, onupdate=func.now())
+
+    application = relationship("Application", back_populates="roles")
+    user_roles = relationship("UserRole", back_populates="role", cascade="all, delete-orphan")
 
     __table_args__ = (
         UniqueConstraint("r_app_id", "r_code", name="uq_role_app_code"),

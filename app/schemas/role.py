@@ -1,6 +1,17 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict
+
+from app.schemas.user import User
+
+class ApplicationInfo(BaseModel):
+    """Basic application info for role details"""
+    model_config = ConfigDict(from_attributes=True)
+    
+    app_id: int
+    app_code: str
+    app_name: str
+    app_description: Optional[str] = None
 
 class RoleBase(BaseModel):
     r_app_id: int
@@ -27,3 +38,8 @@ class RoleInDB(RoleBase):
 
 class Role(RoleInDB):
     pass
+
+class RoleWithDetails(RoleInDB):
+    """Role with application info and assigned users"""
+    application: ApplicationInfo
+    users: List[User] = []
