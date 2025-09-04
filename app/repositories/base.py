@@ -6,7 +6,6 @@ from app.db.base import Base
 
 ModelType = TypeVar("ModelType", bound=Base)  # type: ignore
 
-
 class BaseRepository(Generic[ModelType]):
     def __init__(self, model: Type[ModelType]):
         self.model = model

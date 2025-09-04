@@ -1,10 +1,8 @@
 from typing import Optional, List
 from sqlalchemy.orm import Session
-from sqlalchemy import text
 
 from app.models.role import Role
 from app.repositories.base import BaseRepository
-
 
 class RoleRepository(BaseRepository[Role]):
     def __init__(self):

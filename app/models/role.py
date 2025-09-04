@@ -1,8 +1,9 @@
-from sqlalchemy import Column, BigInteger, Integer, String, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import (
+    Column, BigInteger, Integer, String, DateTime, ForeignKey, UniqueConstraint
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 from app.db.base import Base
-
 
 class Role(Base):
     __tablename__ = "roles"

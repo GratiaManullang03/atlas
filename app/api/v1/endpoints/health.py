@@ -10,7 +10,6 @@ from app.schemas.common import ResponseBase
 
 router = APIRouter()
 
-
 @router.get("/", response_model=ResponseBase)
 async def health_check(
     db: Session = Depends(get_db),

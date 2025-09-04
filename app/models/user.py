@@ -1,7 +1,9 @@
-from sqlalchemy import Column, BigInteger, String, Boolean, DateTime, CheckConstraint
+from sqlalchemy import (
+    Column, BigInteger, String, Boolean, DateTime, CheckConstraint
+)
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
-
 
 class User(Base):
     __tablename__ = "users"
@@ -19,6 +21,8 @@ class User(Base):
     u_email_verified = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, onupdate=func.now())
+
+    user_roles = relationship("UserRole", back_populates="user", cascade="all, delete-orphan")
 
     __table_args__ = (
         CheckConstraint(

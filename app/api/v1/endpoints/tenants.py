@@ -10,7 +10,6 @@ from app.utils.database_init import seed_new_tenant_data
 router = APIRouter()
 tenant_service = TenantService()
 
-
 @router.post("/", response_model=DataResponse[TenantInfo])
 def create_tenant(
     tenant: TenantCreate,
@@ -60,7 +59,6 @@ def create_tenant(
         data=tenant_info
     )
 
-
 @router.get("/", response_model=DataResponse[TenantList])
 def list_tenants(
     db: Session = Depends(get_db)
@@ -78,7 +76,6 @@ def list_tenants(
         message="Tenants retrieved successfully",
         data=tenant_list
     )
-
 
 @router.get("/{schema_name}", response_model=DataResponse[TenantInfo])
 def get_tenant(
@@ -103,7 +100,6 @@ def get_tenant(
         message="Tenant information retrieved successfully",
         data=tenant_info
     )
-
 
 @router.delete("/{schema_name}", response_model=ResponseBase)
 def delete_tenant(

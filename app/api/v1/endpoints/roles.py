@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import Optional
 
-from app.api.deps import get_tenant_db as get_db
+from app.db.session import get_db
 from app.api.deps import PermissionChecker
 from app.services.role import RoleService
 from app.schemas.role import Role, RoleCreate, RoleUpdate
@@ -11,7 +11,6 @@ from app.schemas.common import DataResponse, PaginationResponse
 
 router = APIRouter()
 role_service = RoleService()
-
 
 @router.get("/", response_model=PaginationResponse[Role])
 def get_roles(
@@ -35,7 +34,6 @@ def get_roles(
         pages=(total + limit - 1) // limit
     )
 
-
 @router.get("/{role_id}", response_model=DataResponse[Role])
 def get_role(
     role_id: int,
@@ -51,7 +49,6 @@ def get_role(
         message="Role retrieved successfully",
         data=role
     )
-
 
 @router.post("/", response_model=DataResponse[Role])
 def create_role(
@@ -73,7 +70,6 @@ def create_role(
         data=new_role
     )
 
-
 @router.put("/{role_id}", response_model=DataResponse[Role])
 def update_role(
     role_id: int,
@@ -94,7 +90,6 @@ def update_role(
         message="Role updated successfully",
         data=updated_role
     )
-
 
 @router.delete("/{role_id}", response_model=DataResponse[None])
 def delete_role(

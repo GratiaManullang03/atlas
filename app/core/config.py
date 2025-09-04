@@ -1,7 +1,6 @@
 from typing import Optional
 from pydantic_settings import BaseSettings
 
-
 class Settings(BaseSettings):
     # Application
     APP_NAME: str = "ATLAS"
@@ -38,6 +37,5 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
-
 
 settings = Settings() # type: ignore

@@ -4,8 +4,6 @@ from sqlalchemy.orm import Session
 from app.repositories.user import UserRepository
 from app.schemas.user import UserCreate, UserUpdate, User
 from app.core.security import get_password_hash
-from app.models.user import User as UserModel  # Import the SQLAlchemy model
-
 
 class UserService:
     def __init__(self):

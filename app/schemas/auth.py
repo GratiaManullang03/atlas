@@ -2,11 +2,9 @@ from typing import Optional, List
 from pydantic import BaseModel, EmailStr
 from app.schemas.user_role import UserRoleWithDetails
 
-
 class LoginRequest(BaseModel):
     username: str
     password: str
-
 
 class LoginResponse(BaseModel):
     access_token: str
@@ -14,20 +12,16 @@ class LoginResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int
 
-
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
-
 
 class RefreshTokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int
 
-
 class LogoutRequest(BaseModel):
     refresh_token: str
-
 
 class UserInfo(BaseModel):
     u_id: int

@@ -1,7 +1,8 @@
-from sqlalchemy import Column, BigInteger, Integer, String, DateTime, ForeignKey
+from sqlalchemy import (
+Column, BigInteger, Integer, String, DateTime, ForeignKey
+)
 from sqlalchemy.sql import func
 from app.db.base import Base
-
 
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"

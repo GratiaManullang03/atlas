@@ -3,12 +3,16 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.services.application import ApplicationService
-from app.schemas.application import Application, ApplicationCreate, ApplicationUpdate
+from app.schemas.application import (
+    Application,
+    ApplicationCreate,
+    ApplicationUpdate,
+    ApplicationWithRoles,
+)
 from app.schemas.common import DataResponse, PaginationResponse
 
 router = APIRouter()
 application_service = ApplicationService()
-
 
 @router.get("/", response_model=PaginationResponse[Application])
 def get_applications(
@@ -31,14 +35,13 @@ def get_applications(
         pages=(total + limit - 1) // limit
     )
 
-
-@router.get("/{app_id}", response_model=DataResponse[Application])
+@router.get("/{app_id}", response_model=DataResponse[ApplicationWithRoles])
 def get_application(
     app_id: int,
     db: Session = Depends(get_db)
 ):
-    """Get single application by ID"""
-    application = application_service.get_application(db, app_id)
+    """Get single application by ID with roles and users"""
+    application = application_service.get_application_details(db, app_id)
     if not application:
         raise HTTPException(status_code=404, detail="Application not found")
     
@@ -47,7 +50,6 @@ def get_application(
         message="Application retrieved successfully",
         data=application
     )
-
 
 @router.post("/", response_model=DataResponse[Application])
 def create_application(
@@ -70,7 +72,6 @@ def create_application(
         message="Application created successfully",
         data=new_app
     )
-
 
 @router.put("/{app_id}", response_model=DataResponse[Application])
 def update_application(
@@ -97,7 +98,6 @@ def update_application(
         message="Application updated successfully",
         data=updated_app
     )
-
 
 @router.delete("/{app_id}", response_model=DataResponse[None])
 def delete_application(

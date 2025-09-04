@@ -2,6 +2,8 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Generator
 from app.core.config import settings
+from fastapi import Header
+from typing import Optional
 
 # Normalisasi URL database (postgres:// -> postgresql+asyncpg://)
 db_url = settings.DATABASE_URL
@@ -27,10 +29,14 @@ engine = create_engine(
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-def get_db() -> Generator[Session, None, None]:
-    """Dependency to get database session"""
+def get_db(
+    tenant_schema: Optional[str] = Header(None, alias="X-Tenant-Schema")
+) -> Generator[Session, None, None]:
+    """Dependency to get database session with tenant schema context"""
     db = SessionLocal()
     try:
+        schema_to_set = tenant_schema or settings.DEFAULT_SCHEMA
+        set_schema_search_path(db, schema_to_set)
         yield db
     finally:
         db.close()
