@@ -15,12 +15,14 @@ from app.repositories.refresh_token import RefreshTokenRepository
 from app.schemas.auth import LoginResponse, RefreshTokenResponse, UserInfo
 from app.schemas.user import User
 from app.core.mailer import send_email
+from app.services.user_role import UserRoleService 
 
 
 class AuthService:
     def __init__(self):
         self.user_repo = UserRepository()
         self.refresh_token_repo = RefreshTokenRepository()
+        self.user_role_service = UserRoleService()
     
     def authenticate_user(self, db: Session, username: str, password: str) -> Optional[User]:
         """Authenticate user with username/email and password"""
@@ -110,13 +112,17 @@ class AuthService:
         if not user:
             return None
         
+        # Get user roles
+        user_roles = self.user_role_service.get_user_roles(db, user_id)
+        
         return UserInfo(
             u_id=cast(int, user.u_id),
             u_username=cast(str, user.u_username),
             u_email=cast(str, user.u_email),
             u_full_name=cast(Optional[str], user.u_full_name),
             u_status=cast(str, user.u_status),
-            u_email_verified=cast(bool, user.u_email_verified)
+            u_email_verified=cast(bool, user.u_email_verified),
+            roles=user_roles # Menambahkan roles ke dalam response
         )
     
     async def request_email_verification(self, db: Session, email: str):

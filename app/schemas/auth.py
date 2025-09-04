@@ -1,5 +1,6 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, EmailStr
+from app.schemas.user_role import UserRoleWithDetails
 
 
 class LoginRequest(BaseModel):
@@ -35,6 +36,7 @@ class UserInfo(BaseModel):
     u_full_name: Optional[str] = None
     u_status: str
     u_email_verified: bool
+    roles: List[UserRoleWithDetails] = []
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
