@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.services.tenant import TenantService
 
-
 def init_default_tenant():
     """Initialize default tenant schema"""
     db = SessionLocal()

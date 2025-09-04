@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_tenant_db as get_db
+from app.db.session import get_db
 from app.services.auth import AuthService
 from app.schemas.auth import (
     LoginRequest, LoginResponse, RefreshTokenRequest, 
@@ -13,7 +13,6 @@ from app.api.deps import require_auth
 
 router = APIRouter()
 auth_service = AuthService()
-
 
 @router.post("/login", response_model=DataResponse[LoginResponse])
 def login(
@@ -37,7 +36,6 @@ def login(
         data=tokens
     )
 
-
 @router.post("/refresh", response_model=DataResponse[RefreshTokenResponse])
 def refresh_token(
     refresh_data: RefreshTokenRequest,
@@ -58,7 +56,6 @@ def refresh_token(
         data=new_token
     )
 
-
 @router.post("/logout", response_model=ResponseBase)
 def logout(
     logout_data: LogoutRequest,
@@ -71,7 +68,6 @@ def logout(
         success=success,
         message="Logout successful" if success else "Token not found"
     )
-
 
 @router.get("/me", response_model=DataResponse[UserInfo])
 def get_current_user_info(
@@ -108,7 +104,6 @@ async def request_verification_email(
         message="Jika email terdaftar, email verifikasi akan dikirim."
     )
 
-
 @router.post("/verify-email", response_model=ResponseBase)
 def verify_user_email(
     token: str, # Menerima token sebagai query parameter atau body
@@ -125,24 +120,6 @@ def verify_user_email(
         )
     return ResponseBase(success=True, message="Email berhasil diverifikasi.")
 
-
-# @router.post("/forgot-password", response_model=ResponseBase)
-# async def forgot_password(
-#     request: ForgotPasswordRequest,
-#     background_tasks: BackgroundTasks,
-#     db: Session = Depends(get_db)
-# ):
-#     """
-#     Request a password reset link.
-#     """
-#     background_tasks.add_task(
-#         auth_service.forgot_password, db, request.email
-#     )
-#     return ResponseBase(
-#         success=True,
-#         message="Jika email terdaftar, tautan reset password akan dikirim."
-#     )
-
 @router.post("/forgot-password", response_model=ResponseBase)
 async def forgot_password(
     request: ForgotPasswordRequest,
@@ -158,7 +135,6 @@ async def forgot_password(
         success=True,
         message="Jika email terdaftar, tautan reset password akan dikirim."
     )
-
 
 @router.post("/reset-password", response_model=ResponseBase)
 def reset_password(

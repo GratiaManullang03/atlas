@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
 
-from app.api.deps import get_tenant_db as get_db
+from app.db.session import get_db
 from app.api.deps import PermissionChecker
 from app.services.user import UserService
 from app.services.user_role import UserRoleService
@@ -16,7 +16,6 @@ from app.schemas.common import DataResponse, PaginationResponse
 router = APIRouter()
 user_service = UserService()
 user_role_service = UserRoleService()
-
 
 @router.get("/", response_model=PaginationResponse[User])
 def get_users(
@@ -40,7 +39,6 @@ def get_users(
         pages=(total + limit - 1) // limit
     )
 
-
 @router.get("/{user_id}", response_model=DataResponse[User])
 def get_user(
     user_id: int,
@@ -57,7 +55,6 @@ def get_user(
         message="User retrieved successfully",
         data=user
     )
-
 
 @router.post("/", response_model=DataResponse[User])
 def create_user(
@@ -79,7 +76,6 @@ def create_user(
         message="User created successfully",
         data=new_user
     )
-
 
 @router.put("/{user_id}", response_model=DataResponse[User])
 def update_user(
@@ -103,7 +99,6 @@ def update_user(
         data=updated_user
     )
 
-
 @router.delete("/{user_id}", response_model=DataResponse[None])
 def delete_user(
     user_id: int,
@@ -120,7 +115,6 @@ def delete_user(
         message="User deleted successfully",
         data=None
     )
-
 
 # User Role Management Endpoints
 @router.post("/{user_id}/roles", response_model=DataResponse[List[UserRoleWithDetails]])
@@ -147,7 +141,6 @@ def assign_roles_to_user(
         data=user_roles
     )
 
-
 @router.get("/{user_id}/roles", response_model=DataResponse[List[UserRoleWithDetails]])
 def get_user_roles(
     user_id: int,
@@ -166,7 +159,6 @@ def get_user_roles(
         message="User roles retrieved successfully",
         data=user_roles
     )
-
 
 @router.delete("/{user_id}/roles/{role_id}", response_model=DataResponse[None])
 def remove_role_from_user(

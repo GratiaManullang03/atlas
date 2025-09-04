@@ -4,7 +4,6 @@ from sqlalchemy import text
 
 from app.db.session import create_tenant_schema
 
-
 class TenantService:
     def __init__(self):
         pass

@@ -6,7 +6,6 @@ from app.repositories.user import UserRepository
 from app.repositories.role import RoleRepository
 from app.schemas.user_role import UserRole, UserRoleWithDetails
 
-
 class UserRoleService:
     def __init__(self):
         self.repository = UserRoleRepository()
@@ -98,4 +97,3 @@ class UserRoleService:
                         permissions.add(f"{resource}:{action}")
         
         return permissions
-

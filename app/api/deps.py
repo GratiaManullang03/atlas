@@ -1,11 +1,12 @@
 from typing import Optional
 from fastapi import Depends, HTTPException, status, Header
+import re
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 import redis
 
 from app.core.security import verify_token
-from app.db.session import get_db, set_schema_search_path
+from app.db.session import get_db
 from app.core.config import settings
 from app.services.user_role import UserRoleService
 
@@ -21,7 +22,6 @@ def get_redis() -> Optional[redis.Redis]:
 
 # JWT Bearer token
 security = HTTPBearer(auto_error=False)
-
 
 def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
@@ -44,7 +44,6 @@ def get_current_user(
         "status": payload.get("status"),
     }
 
-
 def require_auth(
     current_user: Optional[dict] = Depends(get_current_user)
 ) -> dict:
@@ -63,7 +62,7 @@ class PermissionChecker:
     
     def __call__(
         self,
-        db: Session = Depends(get_db), # Gunakan get_db agar search_path di-handle oleh get_tenant_db
+        db: Session = Depends(get_db),
         user: dict = Depends(require_auth)
     ) -> None:
         user_id = user.get("user_id")
@@ -85,12 +84,12 @@ class PermissionChecker:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Not enough permissions. Requires: {self.required_permission}"
             )
-
-def get_tenant_db(
-    tenant_schema: Optional[str] = Header(None, alias="X-Tenant-Schema"),
-    db: Session = Depends(get_db)
-) -> Session:
-    """Get database session with tenant schema context"""
-    schema_to_set = tenant_schema or settings.DEFAULT_SCHEMA
-    set_schema_search_path(db, schema_to_set)
-    return db
+        
+def validate_tenant_schema(schema_name: str = Header(None, alias="X-Tenant-Schema")):
+    """Validate tenant schema name"""
+    if schema_name and not re.match(r'^[a-zA-Z][a-zA-Z0-9_]{0,62}$', schema_name):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid schema name format. Must start with letter, contain only alphanumeric characters and underscores, and be 63 characters or less"
+        )
+    return schema_name or settings.DEFAULT_SCHEMA

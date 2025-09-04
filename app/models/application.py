@@ -1,7 +1,9 @@
-from sqlalchemy import Column, BigInteger, String, Text, DateTime
+from sqlalchemy import (
+    Column, BigInteger, String, Text, DateTime
+)
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
-
 
 class Application(Base):
     __tablename__ = "applications"
@@ -12,3 +14,5 @@ class Application(Base):
     app_description = Column(Text)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, onupdate=func.now())
+
+    roles = relationship("Role", back_populates="application", cascade="all, delete-orphan")

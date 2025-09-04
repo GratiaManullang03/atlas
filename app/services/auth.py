@@ -8,7 +8,7 @@ from fastapi import HTTPException, status
 from app.core.config import settings
 from app.core.security import (
     verify_password, create_access_token, get_password_hash,
-    create_short_lived_token, verify_short_lived_token
+    create_short_lived_token, verify_short_lived_token, pwd_context
 )
 from app.repositories.user import UserRepository
 from app.repositories.refresh_token import RefreshTokenRepository
@@ -16,7 +16,6 @@ from app.schemas.auth import LoginResponse, RefreshTokenResponse, UserInfo
 from app.schemas.user import User
 from app.core.mailer import send_email
 from app.services.user_role import UserRoleService 
-
 
 class AuthService:
     def __init__(self):
@@ -39,29 +38,29 @@ class AuthService:
         
         return User.model_validate(db_user)
     
-    def create_tokens(self, db: Session, user: User) -> LoginResponse:
-        """Create access token and refresh token"""
-        # Create access token
+    def create_tokens(self, db: Session, user: User, user_agent: str = "", ip_address: str = "") -> LoginResponse:
+        """Create tokens with enhanced security"""
+        # Gunakan bcrypt untuk hash refresh token
+        refresh_token = secrets.token_urlsafe(64)
+        refresh_token_hash = pwd_context.hash(refresh_token)
+        
+        # Simpan dengan expiration
+        refresh_token_data = {
+            "rt_user_id": user.u_id,
+            "rt_token_hash": refresh_token_hash,
+            "rt_expires_at": datetime.now() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        }
+        
+        self.refresh_token_repo.create(db, refresh_token_data)
+        
+        # Buat access token dengan fingerprint
         access_token_data = {
             "sub": str(user.u_id),
             "username": user.u_username,
             "email": user.u_email,
             "status": user.u_status
         }
-        access_token = create_access_token(access_token_data)
-        
-        # Create refresh token
-        refresh_token = secrets.token_urlsafe(32)
-        refresh_token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
-        
-        # Store refresh token in database
-        refresh_token_data = {
-            "rt_user_id": user.u_id,
-            "rt_token_hash": refresh_token_hash,
-            "rt_expires_at": datetime.now() + timedelta(days=30)  # 30 days
-        }
-        
-        self.refresh_token_repo.create(db, refresh_token_data)
+        access_token = create_access_token(access_token_data, user_agent, ip_address)
         
         return LoginResponse(
             access_token=access_token,

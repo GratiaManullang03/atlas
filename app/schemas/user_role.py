@@ -2,14 +2,11 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 from typing import List
 
-
 class UserRoleAssignRequest(BaseModel):
     role_id: int
 
-
 class UserRoleAssignBulkRequest(BaseModel):
     role_ids: List[int]
-
 
 class UserRoleInDB(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -19,10 +16,8 @@ class UserRoleInDB(BaseModel):
     ur_role_id: int
     created_at: datetime
 
-
 class UserRole(UserRoleInDB):
     pass
-
 
 class UserRoleWithDetails(BaseModel):
     model_config = ConfigDict(from_attributes=True)
