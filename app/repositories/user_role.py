@@ -42,6 +42,7 @@ class UserRoleRepository(BaseRepository[UserRole]):
                 r.r_level as role_level,
                 a.app_id,
                 a.app_name,
+                a.app_code,
                 ur.created_at
             FROM user_roles ur
             JOIN roles r ON ur.ur_role_id = r.r_id

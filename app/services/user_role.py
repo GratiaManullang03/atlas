@@ -65,6 +65,7 @@ class UserRoleService:
                 role_level=role_data["role_level"],
                 app_id=role_data["app_id"],
                 app_name=role_data["app_name"],
+                app_code=role_data["app_code"],
                 created_at=role_data["created_at"]
             ) for role_data in roles_data
         ]

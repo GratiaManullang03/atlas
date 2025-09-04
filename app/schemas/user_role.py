@@ -34,4 +34,5 @@ class UserRoleWithDetails(BaseModel):
     role_level: int
     app_id: int
     app_name: str
+    app_code: str
     created_at: datetime
