@@ -1,10 +1,12 @@
 from typing import List, Optional, Set
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 from app.repositories.user_role import UserRoleRepository
 from app.repositories.user import UserRepository
 from app.repositories.role import RoleRepository
 from app.schemas.user_role import UserRole, UserRoleWithDetails
+from app.models.user_role import UserRole as UserRoleModel
 
 class UserRoleService:
     def __init__(self):
@@ -39,13 +41,32 @@ class UserRoleService:
         return UserRole.model_validate(db_assignment)
     
     def assign_roles_to_user(self, db: Session, user_id: int, role_ids: List[int]) -> List[UserRole]:
-        """Assign multiple roles to user"""
-        results = []
-        for role_id in role_ids:
-            assignment = self.assign_role_to_user(db, user_id, role_id)
-            if assignment:
-                results.append(assignment)
-        return results
+        """Assign multiple roles to a user efficiently using bulk insert."""
+        # 1. Verify user exists
+        user = self.user_repository.get(db, user_id)
+        if not user:
+            return []
+
+        # 2. Ambil ID peran yang sudah ada untuk pengguna
+        existing_role_ids_query = select(UserRoleModel.ur_role_id).where(UserRoleModel.ur_user_id == user_id)
+        existing_role_ids_result = db.execute(existing_role_ids_query).scalars().all()
+        existing_role_ids = set(existing_role_ids_result)
+
+        # 3. Filter hanya peran yang belum ditetapkan
+        new_role_ids = set(role_ids) - existing_role_ids
+
+        if not new_role_ids:
+            return []
+
+        # 4. Siapkan data untuk bulk insert
+        assignments_to_create = [
+            {"ur_user_id": user_id, "ur_role_id": role_id} for role_id in new_role_ids
+        ]
+
+        # 5. Lakukan bulk insert
+        new_assignments = self.repository.create_multi(db, assignments_to_create)
+
+        return [UserRole.model_validate(assignment) for assignment in new_assignments]
     
     def remove_role_from_user(self, db: Session, user_id: int, role_id: int) -> bool:
         """Remove role from user"""

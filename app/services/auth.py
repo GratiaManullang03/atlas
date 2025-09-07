@@ -8,7 +8,7 @@ from fastapi import HTTPException, status
 from app.core.config import settings
 from app.core.security import (
     verify_password, create_access_token, get_password_hash,
-    create_short_lived_token, verify_short_lived_token, pwd_context
+    create_short_lived_token, verify_short_lived_token, pwd_context, create_refresh_token
 )
 from app.repositories.user import UserRepository
 from app.repositories.refresh_token import RefreshTokenRepository
@@ -40,10 +40,17 @@ class AuthService:
     
     def create_tokens(self, db: Session, user: User, user_agent: str = "", ip_address: str = "") -> LoginResponse:
         """Create tokens with enhanced security"""
-        # Gunakan bcrypt untuk hash refresh token
-        refresh_token = secrets.token_urlsafe(64)
-        refresh_token_hash = pwd_context.hash(refresh_token)
+        # --- PERUBAHAN DI SINI ---
+        # 1. Siapkan data untuk payload refresh token (cukup user_id)
+        refresh_token_payload = {"sub": str(user.u_id)}
         
+        # 2. Buat JWT sebagai refresh token
+        refresh_token = create_refresh_token(data=refresh_token_payload)
+        
+        # 3. Hash JWT tersebut untuk disimpan di database (konsisten dengan verifikasi)
+        refresh_token_hash = pwd_context.hash(refresh_token)
+        # --- AKHIR PERUBAHAN ---
+
         # Simpan dengan expiration
         refresh_token_data = {
             "rt_user_id": user.u_id,
@@ -68,24 +75,25 @@ class AuthService:
             expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
         )
     
-    def refresh_access_token(self, db: Session, refresh_token: str) -> Optional[RefreshTokenResponse]:
+    def refresh_access_token(self, db: Session, refresh_token: str, user_id: int) -> Optional[RefreshTokenResponse]:
         """Create new access token from refresh token"""
-        # Hash the provided refresh token
-        token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
+        db_refresh_tokens = self.refresh_token_repo.get_by_user_id(db, user_id)
         
-        # Find refresh token in database
-        db_refresh_token = self.refresh_token_repo.get_by_token_hash(db, token_hash)
-        
+        db_refresh_token = None
+        for token in db_refresh_tokens:
+            # PEMBERSIHAN KECIL: Gunakan akses atribut langsung, lebih mudah dibaca
+            if pwd_context.verify(refresh_token, getattr(token, "rt_token_hash")):
+                db_refresh_token = token
+                break
+
         if not db_refresh_token:
             return None
         
-        # Get user
         user = self.user_repo.get(db, db_refresh_token.rt_user_id)
         
         if not user or cast(str, user.u_status) != "active":
             return None
         
-        # Create new access token
         access_token_data = {
             "sub": str(user.u_id),
             "username": cast(str, user.u_username),
@@ -99,11 +107,24 @@ class AuthService:
             expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
         )
     
-    def logout_user(self, db: Session, refresh_token: str) -> bool:
+    def logout_user(self, db: Session, refresh_token: str, user_id: int) -> bool:
         """Logout user by removing refresh token"""
-        token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
-        return self.refresh_token_repo.delete_by_token_hash(db, token_hash)
-    
+        db_refresh_tokens = self.refresh_token_repo.get_by_user_id(db, user_id)
+        
+        token_to_delete = None
+        for token in db_refresh_tokens:
+            # PEMBERSIHAN KECIL: Gunakan akses atribut langsung
+            if pwd_context.verify(refresh_token, getattr(token, "rt_token_hash")):
+                token_to_delete = token
+                break
+        
+        if token_to_delete:
+            db.delete(token_to_delete)
+            db.commit()
+            return True
+            
+        return False
+
     def get_user_info(self, db: Session, user_id: int) -> Optional[UserInfo]:
         """Get user info by ID"""
         user = self.user_repo.get(db, user_id)

@@ -32,6 +32,16 @@ class BaseRepository(Generic[ModelType]):
         db.refresh(db_obj)
         return db_obj
     
+    def create_multi(self, db: Session, objs_in: List[Dict[str, Any]]) -> List[ModelType]:
+        """Create multiple new records in a single transaction."""
+        # Create model instances from the input dictionaries
+        db_objs = [self.model(**obj_in) for obj_in in objs_in]
+        
+        # Use bulk_save_objects for efficient insertion
+        db.bulk_save_objects(db_objs, return_defaults=True)
+        db.commit()
+        return db_objs
+    
     def update(
         self, 
         db: Session, 
