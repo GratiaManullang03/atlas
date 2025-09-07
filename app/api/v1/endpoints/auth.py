@@ -10,6 +10,7 @@ from app.schemas.auth import (
 )
 from app.schemas.common import ResponseBase, DataResponse
 from app.api.deps import require_auth
+from app.core.security import verify_token
 
 router = APIRouter()
 auth_service = AuthService()
@@ -42,7 +43,23 @@ def refresh_token(
     db: Session = Depends(get_db)
 ):
     """Refresh access token using refresh token"""
-    new_token = auth_service.refresh_access_token(db, refresh_data.refresh_token)
+    # 1. Verifikasi dan dekode refresh token untuk mendapatkan payload
+    payload = verify_token(refresh_data.refresh_token)
+    
+    if not payload or not payload.get("sub"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+    
+    user_id = int(payload["sub"])
+
+    # 2. Panggil service dengan user_id
+    new_token = auth_service.refresh_access_token(
+        db, 
+        refresh_token=refresh_data.refresh_token, 
+        user_id=user_id
+    )
     
     if not new_token:
         raise HTTPException(
@@ -62,7 +79,22 @@ def logout(
     db: Session = Depends(get_db)
 ):
     """Logout user by invalidating refresh token"""
-    success = auth_service.logout_user(db, logout_data.refresh_token)
+    # 1. Decode the token to get the user_id
+    payload = verify_token(logout_data.refresh_token)
+    
+    if not payload or not payload.get("sub"):
+        # Even if the token is invalid, we can return a success-like response
+        # to prevent leaking information about token validity.
+        return ResponseBase(success=True, message="Logout successful")
+
+    user_id = int(payload["sub"])
+
+    # 2. Call the logout service with the user_id
+    success = auth_service.logout_user(
+        db, 
+        refresh_token=logout_data.refresh_token, 
+        user_id=user_id
+    )
     
     return ResponseBase(
         success=success,
