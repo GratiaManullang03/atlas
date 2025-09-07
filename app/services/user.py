@@ -4,10 +4,13 @@ from sqlalchemy.orm import Session
 from app.repositories.user import UserRepository
 from app.schemas.user import UserCreate, UserUpdate, User
 from app.core.security import get_password_hash
+from app.services.user_role import UserRoleService
+from app.core.config import settings
 
 class UserService:
     def __init__(self):
         self.repository = UserRepository()
+        self.user_role_service = UserRoleService()
     
     def get_user(self, db: Session, user_id: int) -> Optional[User]:
         """Get single user"""
@@ -75,8 +78,21 @@ class UserService:
         updated_user = self.repository.update(db, db_user, update_data)
         return User.model_validate(updated_user) if updated_user else None
     
-    def delete_user(self, db: Session, user_id: int) -> bool:
-        """Delete user"""
+    def delete_user(self, db: Session, user_id: int, current_user: dict) -> bool:
+        """Delete user with role level check"""
+        # Dapatkan role dari pengguna yang sedang login
+        user_roles = self.user_role_service.get_user_roles(db, int(current_user["user_id"]))
+        
+        # Cek apakah ada role di aplikasi ATLAS dengan level 100
+        can_delete = any(
+            role.app_code == settings.APP_NAME and role.role_level <= 100
+            for role in user_roles
+        )
+
+        if not can_delete:
+            return False
+
+        # Lanjutkan proses penghapusan
         deleted = self.repository.delete(db, user_id)
         return deleted is not None
     

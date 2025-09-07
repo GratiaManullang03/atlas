@@ -12,6 +12,8 @@ from app.schemas.user_role import (
     UserRoleWithDetails
 )
 from app.schemas.common import DataResponse, PaginationResponse
+from app.api.deps import require_auth
+from app.schemas.auth import UserInfo
 
 router = APIRouter()
 user_service = UserService()
@@ -103,12 +105,14 @@ def update_user(
 def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
-    _: dict = Depends(PermissionChecker("users:read"))
+    current_user: dict = Depends(require_auth) # Dapatkan info user saat ini
 ):
     """Delete user"""
-    deleted = user_service.delete_user(db, user_id)
+    # Teruskan informasi user ke service
+    deleted = user_service.delete_user(db, user_id, current_user) 
+    
     if not deleted:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found or insufficient permissions")
     
     return DataResponse(
         success=True,
